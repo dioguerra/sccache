@@ -20,6 +20,7 @@ spec:
         app.kubernetes.io/component: scheduler
     spec:
       hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -33,9 +34,13 @@ spec:
           {{- toYaml .Values.securityContext | nindent 12 }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-        command:
+        args:
         - scheduler
-        - --config /data/scheduler.conf
+        - --config
+        - /data/config/scheduler.conf
+        env:
+        - name: SCCACHE_LOG
+          value: "trace"
         ports:
         - name: http
           containerPort: {{ .Values.scheduler.service.port }}
@@ -50,6 +55,14 @@ spec:
         #     port: http
         resources:
           {{- toYaml .Values.resources | nindent 12 }}
+        volumeMounts:
+        - name: config
+          mountPath: /data/config
+      volumes:
+      - name: config
+        secret:
+          secretName: {{ include "sccache.fullname" . }}-config
+          defaultMode: 444
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

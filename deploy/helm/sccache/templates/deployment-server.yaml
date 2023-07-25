@@ -23,6 +23,7 @@ spec:
         app.kubernetes.io/component: server
     spec:
       hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -36,9 +37,13 @@ spec:
           {{- toYaml .Values.securityContext | nindent 12 }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-        command:
+        args:
         - server
-        - --config /data/server.conf
+        - --config
+        - /data/config/server.conf
+        env:
+        - name: SCCACHE_LOG
+          value: "trace"
         ports:
         - name: http
           containerPort: {{ .Values.server.service.port }}
@@ -53,6 +58,14 @@ spec:
         #     port: http
         resources:
           {{- toYaml .Values.resources | nindent 12 }}
+        volumeMounts:
+        - name: config
+          mountPath: /data/config
+      volumes:
+      - name: config
+        secret:
+          secretName: {{ include "sccache.fullname" . }}-config
+          defaultMode: 444
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

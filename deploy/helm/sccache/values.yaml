@@ -4,12 +4,12 @@
 
 scheduler:
   service:
-    type: NodePort
+    type: ClusterIP
     port: 10600
 
 server:
   service:
-    type: NodePort
+    type: ClusterIP
     port: 10501
 
 authentication:
