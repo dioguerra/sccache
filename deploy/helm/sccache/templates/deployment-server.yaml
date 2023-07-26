@@ -34,6 +34,26 @@ spec:
       serviceAccountName: {{ include "sccache.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+      - name: overwrite-server-ip
+        image: registry.cern.ch/kubernetes/busybox:1.36.1
+        command:
+        - /bin/sh
+        - -c
+        - |
+          cp /tmp/config/server.conf /data/config/server.conf
+          sed -i -e "s/^public_addr = \".*\"/public_addr = \"$HOST_IP:{{ .Values.server.service.port }}\"/g" /data/config/server.conf
+          chmod 440 /data/config/server.conf
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        volumeMounts:
+        - name: temp
+          mountPath: /tmp/config
+        - name: config
+          mountPath: /data/config
       containers:
       - name: {{ .Chart.Name }}
         securityContext:
@@ -65,10 +85,12 @@ spec:
         - name: config
           mountPath: /data/config
       volumes:
-      - name: config
+      - name: temp
         secret:
           secretName: {{ include "sccache.fullname" . }}-config
           defaultMode: 444
+      - name: config
+        emptyDir: {}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
