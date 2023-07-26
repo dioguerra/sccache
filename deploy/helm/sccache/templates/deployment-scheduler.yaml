@@ -5,14 +5,17 @@ metadata:
   labels:
     {{- include "sccache.labels" . | nindent 4 }}
 spec:
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "sccache.selectorLabels" . | nindent 6 }}
       app.kubernetes.io/component: scheduler
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+      {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
