@@ -26,6 +26,8 @@ spec:
         app.kubernetes.io/component: server
     spec:
       hostNetwork: true
+      hostIPC: true
+      hostPID: true
       dnsPolicy: ClusterFirstWithHostNet
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -35,6 +37,22 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
+      - image: registry.cern.ch/kubernetes/ops:0.1.0
+        name: selinux-disable
+        command: ["/bin/bash", "-c", "setenforce 0"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /usr/sbin
+          name: usrsbin
+        - mountPath: /dev
+          name: dev
+        - mountPath: /etc
+          name: etc
+        - mountPath: /var/run
+          name: varrun
+        - mountPath: /sys
+          name: sys
       - name: overwrite-server-ip
         image: registry.cern.ch/kubernetes/busybox:1.36.1
         command:
@@ -81,9 +99,31 @@ spec:
         #     port: http
         resources:
           {{- toYaml .Values.resources | nindent 12 }}
+        securityContext:
+          capabilities:
+            # TODO: Try this for now. check how we can create usernamespaces from unpriviledged account after.
+            # https://kubernetes.io/docs/concepts/workloads/pods/user-namespaces/
+            # Error from server side: Res 563 error: run build failed, caused by: Compilation execution failed, caused by: Failed to enter a new Linux namespace, caused by: EPERM: Operation not permitted
+            add:
+            - CAP_SYS_ADMIN
+          runAsUser: 0
+          runAsGroup: 0
+          privileged: true
         volumeMounts:
         - name: config
           mountPath: /data/config
+        - mountPath: /usr/sbin
+          name: usrsbin
+        - mountPath: /dev
+          name: dev
+        - mountPath: /etc
+          name: etc
+        - mountPath: /var/run
+          name: varrun
+        - mountPath: /sys
+          name: sys
+        - mountPath: /tmp
+          name: tmp
       volumes:
       - name: temp
         secret:
@@ -91,6 +131,30 @@ spec:
           defaultMode: 444
       - name: config
         emptyDir: {}
+      - hostPath:
+          path: /dev
+          type: ""
+        name: dev
+      - hostPath:
+          path: /usr/sbin
+          type: ""
+        name: usrsbin
+      - hostPath:
+          path: /sys
+          type: ""
+        name: sys
+      - hostPath:
+          path: /var/run
+          type: ""
+        name: varrun
+      - hostPath:
+          path: /etc
+          type: ""
+        name: etc
+      - hostPath:
+          path: /tmp
+          type: ""
+        name: tmp
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

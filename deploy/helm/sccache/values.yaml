@@ -46,10 +46,18 @@ podAnnotations: {}
 podSecurityContext: {}
   # fsGroup: 2000
 
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
+securityContext:
+  capabilities:
+    # TODO: Try this for now. check how we can create usernamespaces from unpriviledged account after.
+    # https://kubernetes.io/docs/concepts/workloads/pods/user-namespaces/
+    # Error from server side: Res 563 error: run build failed, caused by: Compilation execution failed, caused by: Failed to enter a new Linux namespace, caused by: EPERM: Operation not permitted
+    add:
+    - CAP_SYS_ADMIN
+    # drop:
+    # - ALL
+  runAsUser: 0
+  runAsGroup: 0
+  privileged: true
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
   # runAsUser: 1000
