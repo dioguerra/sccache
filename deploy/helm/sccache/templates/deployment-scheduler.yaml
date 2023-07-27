@@ -22,6 +22,7 @@ spec:
         {{- include "sccache.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: scheduler
     spec:
+      nodeName: dtomasgu-distributed-62gwfcdnbmek-node-0
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       {{- with .Values.imagePullSecrets }}
