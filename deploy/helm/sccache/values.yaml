@@ -8,6 +8,7 @@ scheduler:
     port: 10600
 
 server:
+  replicaCount: 4
   service:
     type: ClusterIP
     port: 10501
@@ -22,10 +23,8 @@ authentication:
     # token: wmHETENXchg8SEHnJjhajG8j2RlEkNQ9a1SHuqD8peiAmTvmjOPm5I6Z0y9rgSYSaYw2rnt7u7yqpkfB7qICMshawJHasz6KO9nXT57GvSGMzYQolkoqzhWBObAbUeNm
     proxy_token:
       # dict with values from https://github.com/mozilla/sccache/blob/main/docs/Distributed.md#oauth2
-      url: "https://keycloak-qa.cern.ch/auth/realms/cern"
+      url: "url"
       cache_secs: 3600
-
-replicaCount: 1
 
 image:
   repository: registry.cern.ch/dtomasgu/sccache-dist
@@ -111,3 +110,5 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+env: {}

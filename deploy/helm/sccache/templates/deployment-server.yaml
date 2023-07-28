@@ -6,7 +6,7 @@ metadata:
     {{- include "sccache.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.server.replicaCount }}
   {{- end }}
   strategy:
     type: Recreate
@@ -85,6 +85,10 @@ spec:
         env:
         - name: SCCACHE_LOG
           value: "trace"
+        {{- range $key, $val := .Values.env }}
+        - name: {{ $key }}
+          value: {{ $val | quote }}
+        {{- end}}
         ports:
         - name: http
           containerPort: {{ .Values.server.service.port }}
